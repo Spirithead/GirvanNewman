@@ -1,65 +1,21 @@
 package com.company;
 
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Scanner;
 
 public class Main {
     static int q = 6;
     static int max = 16;
     static int edgQ = 0;
-    static String[] vertexes = new String[max];
-    static String[] edges;
+    static int comQ = 1;
+    static String[] vertexes = new String[]{"0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"};
+    static String[] edges = new String[max];
+    static String[] coms = new String[max];
     static double modularity;
 
     public static void main(String[] args) {
-
-        /*int[][] graph = createGraph();
-        String[][] res = dijkstra(graph);
-        for (int i = 0; i < q; i++) {
-            for (int j = 0; j < q; j++) {
-                System.out.print(res[i][j] + " ");
-            }
-            System.out.print('\n');
-        }
-
-        System.out.println("edgq = " + edgQ);
-        calcMod(graph);
-        System.out.println("mod = " + modularity);
-
-        edges = createEdges(graph);
-        calcEdgeBtw(edges, res);
-
-        for (int i = 0; i < max; i++) {
-            if (edges[i] == null) continue;
-            System.out.println(edges[i]);
-        }
-
-        deleteEdge(edges, graph);
-        System.out.println("--------------------------");
-
-        for (int i = 0; i < max; i++) {
-            if (edges[i] == null) continue;
-            System.out.println(edges[i]);
-        }
-
-        System.out.println("--------------------------");
-
-        String[] comm = detectComm(graph);
-        for (int i = 0; i < comm.length; i++) {
-            if (edges[i] == null || Objects.equals(edges[i], "")) continue;
-            System.out.println(comm[i]);
-        }
-
-        System.out.println("edgq = " + edgQ);
-        calcMod(graph);
-        System.out.println("mod = " + modularity);
-
-        for (int i = 0; i < q; i++) {
-            System.out.println(vertexes[i]);
-        }*/
-
         int[][] graph = createGraph();
+        coms = detectComm(graph);
         calcMod(graph);
         System.out.println("mod = " + modularity);
         girvanNewmanIter(graph);
@@ -71,14 +27,13 @@ public class Main {
 
     }
 
-    public static void girvanNewmanIter(int[][] graph){
-
-        String[][] res = dijkstra(graph);
+    public static void girvanNewmanIter(int[][] graph) {
+        String[][] paths;
+        paths = dijkstra(graph);
         edges = createEdges(graph);
-        calcEdgeBtw(edges, res);
+        calcEdgeBtw(edges, paths);
         deleteEdge(edges, graph);
-        String[] comm = detectComm(graph);
-        System.out.println("a");
+        coms = detectComm(graph);
     }
 
     public static String[][] createPaths(int[][] paths) {
@@ -92,7 +47,7 @@ public class Main {
         for (int x = 0; x < q; x++) {
             for (int i = 0; i < q; i++) {
                 int point = i;
-                if (point == x) {
+                if (point == x || paths[x][i] == i) {
                     continue;
                 }
                 do {
@@ -111,7 +66,7 @@ public class Main {
         for (int i = 0; i < q; i++) {
             for (int j = 0; j < i + 1; j++) {
                 if (graph[i][j] == 1) {
-                    edges[pnt] = Integer.toString(i) + Integer.toString(j) + "0";
+                    edges[pnt] = i + Integer.toString(j) + "0";
                     pnt++;
                 }
             }
@@ -153,6 +108,8 @@ public class Main {
                     if (v != x && !marked[v] && (lengths[x][v] > (lengths[x][curr]) + graph[curr][v])) {
                         lengths[x][v] = (lengths[x][curr]) + graph[curr][v];
                         paths[x][v] = curr;
+                    } else if (lengths[x][v] == max) {
+                        paths[x][v] = v;
                     }
                 }
             }
@@ -162,9 +119,9 @@ public class Main {
 
     public static int[][] createGraph() {
         Scanner sc = new Scanner(System.in);
-        int[][] graph = new int[q][q];
-        for (int i = 0; i < q; i++) {
-            for (int j = 0; j < q; j++) {
+        int[][] graph = new int[max][max];
+        for (int i = 0; i < max; i++) {
+            for (int j = 0; j < max; j++) {
                 graph[i][j] = max;
             }
         }
@@ -189,7 +146,7 @@ public class Main {
                 pntLoop:
                 while (pnt + 1 < currPath.length) {
                     for (int k = 0; k < edges.length; k++) {
-                        if(edges[k] == null) continue;
+                        if (edges[k] == null) continue;
                         char[] currSample = new char[]{currPath[pnt], currPath[pnt + 1]};
                         char[] currEdge = new char[]{edges[k].charAt(0), edges[k].charAt(1)};
                         char[] currEdgeInv = new char[]{edges[k].charAt(1), edges[k].charAt(0)};
@@ -220,12 +177,12 @@ public class Main {
         int maxBtw = 0;
         char[] maxEdge = new char[2];
         int x, y;
-        for (int i = 0; i < edges.length; i++) {
-            if (edges[i] == null) continue;
-            int btw = Integer.parseInt(edges[i], 2, edges[i].length(), 10);
+        for (String edge : edges) {
+            if (edge == null) continue;
+            int btw = Integer.parseInt(edge, 2, edge.length(), 10);
             if (btw > maxBtw) {
                 maxBtw = btw;
-                maxEdge = edges[i].substring(0, 2).toCharArray();
+                maxEdge = edge.substring(0, 2).toCharArray();
             }
         }
 
@@ -238,7 +195,6 @@ public class Main {
                 edges[i] = null;
             }
         }
-
         graph[x][y] = max;
         graph[y][x] = max;
         edgQ--;
@@ -266,6 +222,7 @@ public class Main {
             communities[pnt] += x;
             vertexes[x] = String.valueOf(pnt);
             pnt++;
+            comQ = pnt;
         }
 
         return communities;
@@ -286,8 +243,12 @@ public class Main {
     public static void calcMod(int[][] graph) {
         calcVrtDegree(graph);
         modularity = 0;
+        /*for (int n = 0; n < comQ; n++) {
+
+        }*/
         for (int i = 0; i < q; i++) {
             for (int j = 0; j < q; j++) {
+                //if(i == j) continue;
                 int di = Character.getNumericValue(vertexes[i].charAt(1));
                 int dj = Character.getNumericValue(vertexes[j].charAt(1));
                 int ci = Character.getNumericValue(vertexes[i].charAt(0));
@@ -295,6 +256,7 @@ public class Main {
                 modularity += (graph[i][j] - ((double) di * (double) dj / (2 * edgQ))) * ((ci == cj) ? 1 : 0);
             }
         }
+
         modularity /= (2 * edgQ);
     }
 }
