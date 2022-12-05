@@ -18,6 +18,7 @@ public class Main {
         coms = detectComm(graph);
         calcMod(graph);
         System.out.println("mod = " + modularity);
+        edges = createEdges(graph);
         girvanNewmanIter(graph);
         calcMod(graph);
         System.out.println("mod = " + modularity);
@@ -30,31 +31,28 @@ public class Main {
     public static void girvanNewmanIter(int[][] graph) {
         String[][] paths;
         paths = dijkstra(graph);
-        edges = createEdges(graph);
         calcEdgeBtw(edges, paths);
         deleteEdge(edges, graph);
         coms = detectComm(graph);
     }
 
     public static String[][] createPaths(int[][] paths) {
-        String[][] paths_s = new String[q][q];
-        for (int i = 0; i < q; i++) {
-            for (int j = 0; j < q; j++) {
+        String[][] paths_s = new String[max][max];
+        for (int i = 0; i < max; i++) {
+            for (int j = 0; j < max; j++) {
                 paths_s[i][j] = "";
             }
-
         }
-        for (int x = 0; x < q; x++) {
-            for (int i = 0; i < q; i++) {
+        for (int x = 0; x < max; x++) {
+            for (int i = 0; i < max; i++) {
                 int point = i;
-                if (point == x || paths[x][i] == i) {
-                    continue;
+                if (!(point == x || paths[x][i] == i)) {
+                    while(point != x){
+                        paths_s[x][i] += point;
+                        point = paths[x][point];
+                    }
+                    paths_s[x][i] += x;
                 }
-                do {
-                    paths_s[x][i] += point;
-                    point = paths[x][point];
-                } while (point != x);
-                paths_s[x][i] += x;
             }
         }
         return paths_s;
@@ -75,28 +73,33 @@ public class Main {
     }
 
     public static String[][] dijkstra(int[][] graph) {
-        int[][] lengths = new int[q][q];
-        boolean[] marked = new boolean[q];
+        int[][] lengths = new int[max][max];
+        boolean[] marked = new boolean[max];
         int curr = 0;
-        int[][] paths = new int[q][q];
+        int[][] paths = new int[max][max];
 
 
-        for (int x = 0; x < q; x++) {
-            for (int i = 0; i < q; i++) {
+        for (int x = 0; x < max; x++) {
+
+
+            for (int i = 0; i < max; i++) {
                 paths[x][i] = x;
             }
             lengths[x][x] = 0;
-            for (int i = 0; i < q; i++) {
+            for (int i = 0; i < max; i++) {
                 marked[i] = false;
-                if (i == x) continue;
-                lengths[x][i] = graph[x][i];
+                if (i != x) {
+                    lengths[x][i] = graph[x][i];
+                    //continue;
+                }
+
             }
-            for (int y = 0; y < q; y++) {
+            marked[x] = true;
+            for (int y = 0; y < max; y++) {
 
-                marked[x] = true;
+                int minLength = max;
+                for (int i = 0; i < max; i++) {
 
-                for (int i = 0; i < q; i++) {
-                    int minLength = max;
                     if ((lengths[x][i] < minLength) && !marked[i] && i != x) {
                         curr = i;
                         minLength = lengths[x][i];
@@ -104,7 +107,7 @@ public class Main {
                 }
                 marked[curr] = true;
 
-                for (int v = 0; v < q; v++) {
+                for (int v = 0; v < max; v++) {
                     if (v != x && !marked[v] && (lengths[x][v] > (lengths[x][curr]) + graph[curr][v])) {
                         lengths[x][v] = (lengths[x][curr]) + graph[curr][v];
                         paths[x][v] = curr;
@@ -253,7 +256,7 @@ public class Main {
                 int dj = Character.getNumericValue(vertexes[j].charAt(1));
                 int ci = Character.getNumericValue(vertexes[i].charAt(0));
                 int cj = Character.getNumericValue(vertexes[j].charAt(0));
-                modularity += (graph[i][j] - ((double) di * (double) dj / (2 * edgQ))) * ((ci == cj) ? 1 : 0);
+                modularity += (graph[i][j] - (((double) di * (double) dj) / (2 * edgQ))) * ((ci == cj) ? 1 : 0);
             }
         }
 
